@@ -4,7 +4,7 @@ type Env = {
 
 type RequestBody = {
   prompt: string; // The user prompt for the model
-  model_name: string; // The OpenRouter model string (e.g. "openai/gpt4o")
+  modelName: string; // The OpenRouter model string (e.g. "openai/gpt4o")
   stream?: boolean; // Whether to stream the response
   referer?: string; // Optional referer URL for OpenRouter identification (e.g. "https://mysite.com")
   title?: string; // Optional title header for OpenRouter identification (e.g. "Codenames AI")
@@ -45,9 +45,6 @@ export default {
       return createResponse(null, 204); // 204 No Content for OPTIONS
     }
 
-    console.log('Hi');
-    console.log('Environment keys available:', Object.keys(env));
-
     if (request.method !== 'POST') {
       return createResponse(JSON.stringify({ error: 'Only POST requests are allowed' }), 405);
     }
@@ -62,16 +59,16 @@ export default {
     try {
       requestBody = await request.json();
       console.log(
-        `Received request for model: ${requestBody.model_name}, streaming: ${!!requestBody.stream}`
+        `Request: modelName=${requestBody.modelName}, stream=${requestBody.stream}, prompt=${requestBody.prompt}`
       );
     } catch (error) {
       return createResponse(JSON.stringify({ error: 'Invalid JSON in request body' }), 400);
     }
 
-    const { prompt, model_name, stream = false, referer, title } = requestBody;
-    if (!prompt || !model_name) {
+    const { prompt, modelName, stream = false, referer, title } = requestBody;
+    if (!prompt || !modelName) {
       return createResponse(
-        JSON.stringify({ error: 'Missing "prompt" or "model_name" in request body' }),
+        JSON.stringify({ error: 'Missing "prompt" or "modelName" in request body' }),
         400
       );
     }
@@ -84,21 +81,24 @@ export default {
           content: prompt,
         },
       ],
-      model: model_name,
+      model: modelName,
       stream, // Pass the stream flag from the client payload
     };
 
     try {
-      const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': referer || 'https://llm-proxy.abyzov.workers.dev/',
-          'X-Title': title || 'LLM Proxy Worker',
-        },
-        body: JSON.stringify(apiPayload),
-      });
+      const openRouterResponse: Response = await fetch(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': referer || 'https://llm-proxy.abyzov.workers.dev/',
+            'X-Title': title || 'LLM Proxy Worker',
+          },
+          body: JSON.stringify(apiPayload),
+        }
+      );
 
       if (!openRouterResponse.ok) {
         const errorText = await openRouterResponse.text();
@@ -111,7 +111,7 @@ export default {
 
       if (stream) {
         // Handle streaming response
-        console.log(`Starting streaming response for model: ${model_name}`);
+        console.log(`Starting streaming response for model: ${modelName}`);
         const { readable, writable } = new TransformStream();
         openRouterResponse.body?.pipeTo(writable);
 
@@ -127,7 +127,7 @@ export default {
       } else {
         // Handle non-streaming response
         const openRouterData = await openRouterResponse.json();
-        console.log(`Completed non-streaming request for model: ${model_name}`);
+        console.log(`Completed non-streaming request for model: ${modelName}`);
         return createResponse(JSON.stringify(openRouterData));
       }
     } catch (error: unknown) {
