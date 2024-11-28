@@ -47,7 +47,7 @@ curl -X POST \
 
 ```
 curl -X POST \
-  'https://proxy-llm.abyzov.workers.dev' \
+  'https://proxy-llm.[your-server-name].workers.dev' \
   -H 'Content-Type: application/json' \
   -d '{
     "prompt": "Hello, how are you?",
