@@ -35,7 +35,7 @@ curl -X POST \
   -d '{
     "prompt": "Hello, how are you?",
     "modelName": "openai/gpt-4o-mini",
-    "streaming": true
+    "stream": false
   }' | jq .
 ```
 
@@ -52,7 +52,7 @@ curl -X POST \
   -d '{
     "prompt": "Hello, how are you?",
     "modelName": "openai/gpt-4o-mini",
-    "streaming": true
+    "stream": false
   }' | jq .
 ```
 
@@ -82,7 +82,7 @@ async function queryLLM(prompt: string, modelName: string) {
     body: JSON.stringify({
       prompt,
       modelName,
-      streaming: false,
+      stream: false,
     }),
   });
 
@@ -103,7 +103,7 @@ async function streamLLM(prompt: string, modelName: string, onChunk: (text: stri
     body: JSON.stringify({
       prompt,
       modelName,
-      streaming: true,
+      stream: true,
     }),
   });
 
