@@ -10,6 +10,10 @@ type RequestBody = {
   title?: string; // Optional title header for OpenRouter identification (e.g. "Codenames AI")
 };
 
+const DEFAULT_REFERRER = 'https://llmproxy.abyzov.workers.dev/';
+const DEFAULT_TITLE = 'LLM Proxy Worker';
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     // Define common headers
@@ -86,19 +90,16 @@ export default {
     };
 
     try {
-      const openRouterResponse: Response = await fetch(
-        'https://openrouter.ai/api/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': referer || 'https://llm-proxy.abyzov.workers.dev/',
-            'X-Title': title || 'LLM Proxy Worker',
-          },
-          body: JSON.stringify(apiPayload),
-        }
-      );
+      const openRouterResponse: Response = await fetch(OPENROUTER_API_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': referer || DEFAULT_REFERRER,
+          'X-Title': title || DEFAULT_TITLE,
+        },
+        body: JSON.stringify(apiPayload),
+      });
 
       if (!openRouterResponse.ok) {
         const errorText = await openRouterResponse.text();

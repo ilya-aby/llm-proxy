@@ -1,6 +1,6 @@
 #:schema node_modules/wrangler/config-schema.json
-name = "proxy-llm"
-main = "src/proxy-llm.ts"
+name = "llmproxy"
+main = "src/llmProxy.ts"
 compatibility_date = "2024-11-12"
 compatibility_flags = ["nodejs_compat"]
 

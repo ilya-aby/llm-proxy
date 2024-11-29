@@ -47,7 +47,7 @@ curl -X POST \
 
 ```bash
 curl -X POST \
-  'https://proxy-llm.[your-server-name].workers.dev' \
+  'https://llmproxy.[your-server-name].workers.dev' \
   -H 'Content-Type: application/json' \
   -d '{
     "prompt": "Hello, how are you?",
@@ -74,7 +74,7 @@ type RequestBody = {
 
 ```typescript
 async function queryLLM(prompt: string, modelName: string) {
-  const response = await fetch('https://proxy-llm.your-server.workers.dev', {
+  const response = await fetch('https://llmproxy.your-server.workers.dev', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ async function queryLLM(prompt: string, modelName: string) {
 
 ```typescript
 async function streamLLM(prompt: string, modelName: string, onChunk: (text: string) => void) {
-  const response = await fetch('https://proxy-llm.your-server.workers.dev', {
+  const response = await fetch('https://llmproxy.your-server.workers.dev', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
