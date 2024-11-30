@@ -10,7 +10,9 @@ type RequestBody = {
   title?: string; // Optional title header for OpenRouter identification (e.g. "Codenames AI")
 };
 
-const DEFAULT_REFERRER = 'https://llmproxy.abyzov.workers.dev/';
+// Referrer and title are optionally used by OpenRouter to identify the client
+// Change default referrer to your Cloudflare worker URL
+const DEFAULT_REFERRER = 'https://llmproxy.cloudwise.workers.dev/';
 const DEFAULT_TITLE = 'LLM Proxy Worker';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
