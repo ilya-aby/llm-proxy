@@ -2,12 +2,17 @@ type Env = {
   OPENROUTER_API_KEY: string;
 };
 
+type Message = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
+
 type RequestBody = {
-  prompt: string; // The user prompt for the model
+  messages: Message[]; // Array of messages in the conversation
   modelName: string; // The OpenRouter model string (e.g. "openai/gpt4o")
   stream?: boolean; // Whether to stream the response
-  referer?: string; // Optional referer URL for OpenRouter identification (e.g. "https://mysite.com")
-  title?: string; // Optional title header for OpenRouter identification (e.g. "Codenames AI")
+  referer?: string; // Optional referer URL for OpenRouter identification
+  title?: string; // Optional title header for OpenRouter identification
 };
 
 // Referrer and title are optionally used by OpenRouter to identify the client
@@ -64,31 +69,43 @@ export default {
     let requestBody: RequestBody;
     try {
       requestBody = await request.json();
+      const lastMessage = requestBody.messages[requestBody.messages.length - 1];
       console.log(
-        `Request: modelName=${requestBody.modelName}, stream=${requestBody.stream}, prompt=${requestBody.prompt}`
+        `Request: modelName=${requestBody.modelName}, stream=${requestBody.stream}, messageCount=${
+          requestBody.messages.length
+        }, lastMessage="${lastMessage.content.slice(0, 20)}..."`
       );
     } catch (error) {
       return createResponse(JSON.stringify({ error: 'Invalid JSON in request body' }), 400);
     }
 
-    const { prompt, modelName, stream = false, referer, title } = requestBody;
-    if (!prompt || !modelName) {
+    const { messages, modelName, stream = false, referer, title } = requestBody;
+    if (!modelName || !messages || messages.length === 0) {
       return createResponse(
-        JSON.stringify({ error: 'Missing "prompt" or "modelName" in request body' }),
+        JSON.stringify({
+          error: 'Missing required fields. Need "modelName" and at least one message',
+        }),
         400
       );
     }
 
-    // Build the OpenRouter API request payload
+    // Validate message format
+    const isValidMessage = (msg: Message) =>
+      ['system', 'user', 'assistant'].includes(msg.role) && typeof msg.content === 'string';
+
+    if (!messages.every(isValidMessage)) {
+      return createResponse(
+        JSON.stringify({
+          error: 'Invalid message format. Each message must have a valid role and content',
+        }),
+        400
+      );
+    }
+
     const apiPayload = {
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
+      messages,
       model: modelName,
-      stream, // Pass the stream flag from the client payload
+      stream,
     };
 
     try {

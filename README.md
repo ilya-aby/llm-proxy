@@ -14,8 +14,9 @@
 - Supports streaming and non-streaming LLM requests
 - Handles CORS preflight requests
 - Handles OpenRouter API key binding
+- Proxies OpenRouter identification strings like your app's title & referer to help with usage tracking
 
-## Usage & Installation
+## Setup
 
 - Create a Cloudflare account if you don't already have one
 - Create an OpenRouter account if you don't already have one and create an API key for the proxy
@@ -33,16 +34,21 @@ curl -X POST \
   'http://localhost:8787' \
   -H 'Content-Type: application/json' \
   -d '{
-    "prompt": "Hello, how are you?",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello, how are you?"
+      }
+    ],
     "modelName": "openai/gpt-4o-mini",
     "stream": false
-  }' | jq .
+  }' | jq '.choices[0].message.content'
 ```
 
 ### Prod:
 
-- `bunx wrangler secret put OPENROUTER_API_KEY` to bind the OpenRouter API key to the worker
 - `bunx wrangler deploy`
+- `bunx wrangler secret put OPENROUTER_API_KEY` to bind the OpenRouter API key to the worker
 - sample request to check that prod is working:
 
 ```bash
@@ -50,17 +56,27 @@ curl -X POST \
   'https://llmproxy.[your-server-name].workers.dev' \
   -H 'Content-Type: application/json' \
   -d '{
-    "prompt": "Hello, how are you?",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello, how are you?"
+      }
+    ],
     "modelName": "openai/gpt-4o-mini",
     "stream": false
-  }' | jq .
+  }' | jq '.choices[0].message.content'
 ```
 
-## Request Format Type
+## Request Format Types
 
 ```typescript
+type Message = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
+
 type RequestBody = {
-  prompt: string; // User prompt for the model
+  messages: Message[]; // Array of messages in the conversation
   modelName: string; // OpenRouter model string (e.g. "openai/gpt-4o")
   stream?: boolean; // Whether to stream the response
   referer?: string; // Optional referer URL for OpenRouter identification (e.g. "https://mysite.com")
@@ -73,14 +89,14 @@ type RequestBody = {
 ### Non-Streaming Request
 
 ```typescript
-async function queryLLM(prompt: string, modelName: string) {
+async function queryLLM(messages: Message[], modelName: string) {
   const response = await fetch('https://llmproxy.your-server.workers.dev', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      prompt,
+      messages,
       modelName,
       stream: false,
     }),
@@ -89,19 +105,32 @@ async function queryLLM(prompt: string, modelName: string) {
   const data = await response.json();
   return data.choices[0].message.content;
 }
+
+// Usage example:
+const messages = [
+  {
+    role: 'system',
+    content: 'You are a helpful assistant',
+  },
+  {
+    role: 'user',
+    content: 'Hello, how are you?',
+  },
+];
+const response = await queryLLM(messages, 'openai/gpt-4');
 ```
 
 ### Streaming Request
 
 ```typescript
-async function streamLLM(prompt: string, modelName: string, onChunk: (text: string) => void) {
+async function streamLLM(messages: Message[], modelName: string, onChunk: (text: string) => void) {
   const response = await fetch('https://llmproxy.your-server.workers.dev', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      prompt,
+      messages,
       modelName,
       stream: true,
     }),
@@ -136,7 +165,17 @@ async function streamLLM(prompt: string, modelName: string, onChunk: (text: stri
 }
 
 // Usage example:
-streamLLM('Tell me a story', 'openai/gpt-4', (chunk) => {
+const messages = [
+  {
+    role: 'system',
+    content: 'You are a creative storyteller',
+  },
+  {
+    role: 'user',
+    content: 'Tell me a story',
+  },
+];
+streamLLM(messages, 'openai/gpt-4', (chunk) => {
   console.log(chunk); // or append to UI
 });
 ```
