@@ -75,7 +75,7 @@ type Message = {
   content: string;
 };
 
-type RequestBody = {
+type LLMRequest = {
   messages: Message[]; // Array of messages in the conversation
   modelName: string; // OpenRouter model string (e.g. "openai/gpt-4o")
   stream?: boolean; // Whether to stream the response

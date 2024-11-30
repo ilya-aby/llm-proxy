@@ -7,7 +7,7 @@ type Message = {
   content: string;
 };
 
-type RequestBody = {
+type LLMRequest = {
   messages: Message[]; // Array of messages in the conversation
   modelName: string; // The OpenRouter model string (e.g. "openai/gpt4o")
   stream?: boolean; // Whether to stream the response
@@ -66,7 +66,7 @@ export default {
       return createResponse(JSON.stringify({ error: 'Server error: missing API key' }), 500);
     }
 
-    let requestBody: RequestBody;
+    let requestBody: LLMRequest;
     try {
       requestBody = await request.json();
       const lastMessage = requestBody.messages[requestBody.messages.length - 1];
